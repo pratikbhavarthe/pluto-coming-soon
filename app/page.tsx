@@ -1,13 +1,23 @@
-import SingleMarquee from "@/app/components/single-marquee";
+import Image from "next/image";
+import NotifyForm from "@/app/components/notify-form";
 
 export default function Home() {
   return (
-    <main className="relative h-dvh overflow-hidden bg-black pt-16">
-      <div className="flex h-[calc(100dvh-4rem)] w-full items-center justify-center">
-        <div className="w-full flex justify-center">
-          <SingleMarquee text="COMING SOON ✦" speed={95} direction={-1} />
-        </div>
-      </div>
+    <main className="flex h-dvh w-full flex-col items-center justify-center bg-black text-white">
+      <Image
+        src="/pluto-logo.svg"
+        alt="Pluto Mobility Logo"
+        width={260}
+        height={260}
+        priority
+        className="select-none"
+      />
+
+      <h1 className="mt-8 text-4xl sm:text-6xl font-semibold tracking-tight">
+        COMING SOON
+      </h1>
+
+      <NotifyForm />
     </main>
   );
 }

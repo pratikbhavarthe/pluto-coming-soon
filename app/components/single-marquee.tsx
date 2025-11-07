@@ -1,60 +1,62 @@
 "use client";
 
-import { motion, useAnimationFrame, useMotionValue, useScroll, useSpring, useTransform, useVelocity } from "framer-motion";
-import { useRef } from "react";
-
-function wrap(min: number, max: number, v: number) {
-  const range = max - min;
-  return ((((v - min) % range) + range) % range) + min;
-}
+import { motion, useAnimationFrame, useMotionValue } from "framer-motion";
+import { useLayoutEffect, useRef, useState } from "react";
 
 type Props = {
   text?: string;
-  speed?: number;
-  direction?: 1 | -1;
+  speed?: number;       // px/sec
+  direction?: 1 | -1;   // -1 = left, 1 = right
 };
 
 export default function SingleMarquee({
-  text = "COMING SOON ·",
-  speed = 95,
+  text = "COMING SOON \u00B7",
+  speed = 55,
   direction = -1,
 }: Props) {
-  const baseX = useMotionValue(0);
+  const x = useMotionValue(0);
+  const aRef = useRef<HTMLSpanElement>(null);
+  const [w, setW] = useState(0);
 
-  const { scrollY } = useScroll();
-  const v = useVelocity(scrollY);
-  const smooth = useSpring(v, { damping: 40, stiffness: 400, mass: 0.6 });
-  const factor = useTransform(smooth, [-1000, 0, 1000], [-2, 0, 2]);
-
-  const dirRef = useRef(direction);
+  // measure exact width of one copy
+  useLayoutEffect(() => {
+    if (!aRef.current) return;
+    const measure = () => setW(aRef.current!.offsetWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(aRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   useAnimationFrame((_, delta) => {
-    let moveBy = dirRef.current * (speed * (delta / 1000));
-    moveBy += dirRef.current * moveBy * factor.get();
-    baseX.set(baseX.get() + moveBy);
+    const base = direction * (speed * (delta / 1000));
+    let next = x.get() + base;
+
+    if (w > 0) {
+      if (direction === -1 && next <= -w) next += w;
+      if (direction === 1 && next >=  w) next -= w;
+    }
+    x.set(next);
   });
 
-  const x = useTransform(baseX, (v) => `${wrap(-50, 0, v / 10)}%`);
+  // vertical gradient: bottom primary #373737 → top accent #F9BB00
+  const textClass =
+    "whitespace-nowrap leading-none font-medium tracking-tight " +
+    "text-[clamp(44px,10vw,180px)] " +
+    "bg-gradient-to-t from-[#373737] to-[#F9BB00] bg-clip-text text-transparent";
 
-  // ✅ Using your exact line
-  const content = new Array(8).fill("COMING SOON ·").join("  ");
+  const GAP = 64;
+
+  // EXACT requested content line with middle dot U+00B7
+  const content = new Array(8).fill("COMING SOON \u00B7").join("  ");
 
   return (
-    <div className="relative w-full overflow-hidden flex items-center">
-      <motion.div
-        style={{ x }}
-        className="whitespace-nowrap will-change-transform"
-        aria-hidden
-      >
-        <span
-          className="
-            align-middle
-            text-[14vw] sm:text-[12vw] md:text-[10vw]
-            font-semibold tracking-[-0.035em]
-            bg-gradient-to-b from-[#F9BB00] to-[#373737]
-            bg-clip-text text-transparent
-          "
-        >
+    <div className="relative w-full overflow-hidden flex items-center justify-center">
+      <motion.div style={{ x }} className="flex will-change-transform" aria-hidden>
+        <span ref={aRef} className={textClass} style={{ paddingRight: GAP }}>
+          {content}
+        </span>
+        <span className={textClass} style={{ paddingRight: GAP }}>
           {content}
         </span>
       </motion.div>
