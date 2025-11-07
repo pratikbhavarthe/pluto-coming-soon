@@ -22,8 +22,8 @@ export default function Home() {
         <Image
           src="/pluto-logo.svg"
           alt="Pluto Mobility Logo"
-          width={140}
-          height={140}
+          width={350}
+          height={350}
           priority
           className="mb-6 select-none"
         />
